@@ -13,7 +13,7 @@ cp -R rpc/proto/inventory/* rpc
 echo "Cleaning protos directory.."
 rm -rf rpc/proto
 
-# echo "Commtting code so that cahnges will reflect.."
-# git commit -am 'Updating submodules'
+echo "Commtting code so that cahnges will reflect.."
+git commit -am 'Updating submodules'
 
 echo "DONE"
