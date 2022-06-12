@@ -20,6 +20,7 @@ func NewRedisManager(conn *redis.Client) *RedisManager {
 }
 
 func (r *RedisManager) GetAllInventories(ctx context.Context, items []*rpc.Sku) (resp *rpc.GetAllInventoriesResp, err error) {
+	defer r.Conn.Close()
 	pipe := r.Conn.Pipeline()
 	listOfInventoryItems := []SingleRedisItem{}
 
@@ -49,6 +50,8 @@ func (r *RedisManager) GetAllInventories(ctx context.Context, items []*rpc.Sku) 
 }
 
 func (r *RedisManager) DeductQuantity(ctx context.Context, itemName string, quantity int) (err error) {
+
+	defer r.Conn.Close()
 	item := &SkuInstance{}
 
 	err = r.Conn.HGetAll(ctx, itemName).Scan(item.Sku)
