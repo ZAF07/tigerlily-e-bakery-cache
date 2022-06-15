@@ -106,7 +106,7 @@ func TestGetOneItem(t *testing.T) {
 
 	manager := NewAdminRedisManager(rdb)
 	passed := true
-	resp, err := manager.GetOneInventory(ctx, cheese, "price")
+	resp, err := manager.GetOneInventory(ctx, cheese.Name)
 	if err != nil {
 		passed = false
 	}

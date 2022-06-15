@@ -72,10 +72,10 @@ func (r *AdminRedisManager) GetAllInventories(ctx context.Context, items []*rpc.
 	return
 }
 
-func (r *AdminRedisManager) GetOneInventory(ctx context.Context, item *rpc.Sku, field string) (resp *rpc.Sku, err error) {
+func (r *AdminRedisManager) GetOneInventory(ctx context.Context, item string) (resp *rpc.Sku, err error) {
 	start := time.Now()
 	temp := &Sku{}
-	err = r.Conn.HGetAll(ctx, item.Name).Scan(temp)
+	err = r.Conn.HGetAll(ctx, item).Scan(temp)
 	resp = &rpc.Sku{
 		Name:        temp.Name,
 		SkuId:       temp.SkuID,
@@ -127,6 +127,7 @@ func (r *AdminRedisManager) DeductQuantity(ctx context.Context, itemName string,
 	return nil
 }
 
+// ❌
 // DeductQuantities removes multiple item quantities from the cache
 // func (r *RedisManager) DeductQuantities(ctx context.Context, itemName map[string]interface{}, quantity int) (err error) {
 // 	for _ v := range itemName {
@@ -174,3 +175,8 @@ func (r *AdminRedisManager) AddInventory(ctx context.Context, item *rpc.Sku) (er
 	fmt.Println("DONE AddInventory : ", time.Since(start))
 	return nil
 }
+
+// func (r *AdminRedisManager) DeleteOne(ctx context.Context, item string) (err error)     {}
+// func (r *AdminRedisManager) DeleteMany(ctx context.Context, items []string) (err error) {}
+// func (r *AdminRedisManager) UpdateOne(ctx context.Context, item string) (err error)     {}
+// func (r *AdminRedisManager) UpdateMany(ctx context.Context, item []string) (err error)  {}

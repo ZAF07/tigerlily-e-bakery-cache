@@ -112,7 +112,7 @@ func GetOneItem(r *redis.Client, item *rpc.Sku, field string) (resp *rpc.Sku, er
 	rc := r_manager.NewAdminRedisManager(r)
 	temp := r_manager.NewSku()
 
-	resp, err = rc.GetOneInventory(ctx, cheese, "price")
+	resp, err = rc.GetOneInventory(ctx, cheese.Name)
 	if err != nil {
 		log.Printf("ERROR GET ONE : %+v\n", err)
 	}
