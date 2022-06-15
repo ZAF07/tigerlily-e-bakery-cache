@@ -13,6 +13,35 @@ import (
 
 var ctx = context.Background()
 
+// //  BULK INSERT
+var lemon = &rpc.Sku{
+	Name:        "lemon tart",
+	Description: "Sweet and sour",
+	Price:       2.5,
+	Quantity:    10,
+	SkuId:       "11111",
+	ImageUrl:    "lemon_tart.com",
+	Type:        "tart",
+}
+var egg = &rpc.Sku{
+	Name:        "egg tart",
+	Description: "Eggy",
+	Price:       2.5,
+	Quantity:    10,
+	SkuId:       "11111",
+	ImageUrl:    "egg_tart.com",
+	Type:        "tart",
+}
+var cheese = &rpc.Sku{
+	Name:        "cheese tart",
+	Description: "Cheesy",
+	Price:       2.5,
+	Quantity:    10,
+	SkuId:       "11111",
+	ImageUrl:    "cheese_tart.com",
+	Type:        "tart",
+}
+
 /*
 	❌ USE GO TEST MODULE
 */
@@ -29,34 +58,6 @@ func main() {
 	}
 	cache := r_manager.NewRedisManager(rdb)
 
-	// //  BULK INSERT
-	lemon := &rpc.Sku{
-		Name:        "lemon tart",
-		Description: "Sweet and sour",
-		Price:       2.5,
-		Quantity:    10,
-		SkuId:       "11111",
-		ImageUrl:    "lemon_tart.com",
-		Type:        "tart",
-	}
-	egg := &rpc.Sku{
-		Name:        "egg tart",
-		Description: "Eggy",
-		Price:       2.5,
-		Quantity:    10,
-		SkuId:       "11111",
-		ImageUrl:    "egg_tart.com",
-		Type:        "tart",
-	}
-	cheese := &rpc.Sku{
-		Name:        "cheese tart",
-		Description: "Cheesy",
-		Price:       2.5,
-		Quantity:    10,
-		SkuId:       "11111",
-		ImageUrl:    "cheese_tart.com",
-		Type:        "tart",
-	}
 	itemsToAdd := []*rpc.Sku{}
 	itemsToAdd = append(itemsToAdd, lemon)
 	itemsToAdd = append(itemsToAdd, egg)
@@ -91,12 +92,33 @@ func main() {
 	}
 
 	// // GET ALL INVENTORIES
-	items := []*rpc.Sku{}
-	items = append(items, item)
-	resp, err := cache.GetAllInventories(ctx, items)
-	if err != nil {
-		log.Printf("ERROR ALL : %+v\n", err)
-	}
-	fmt.Printf("ALL INVENTORIES : %+v\n", resp)
+	// items := []*rpc.Sku{}
+	// items = append(items, item)
+	// resp, err := cache.GetAllInventories(ctx, items)
+	// if err != nil {
+	// 	log.Printf("ERROR ALL : %+v\n", err)
+	// }
+	// fmt.Printf("ALL INVENTORIES : %+v\n", resp)
+
+	// Get one item
+	GetOneItem(rdb, cheese, "price")
+
 	fmt.Println("DONE MAIN --> ", time.Since(start))
+}
+
+func GetOneItem(r *redis.Client, item *rpc.Sku, field string) (resp *rpc.Sku, err error) {
+	start := time.Now()
+
+	rc := r_manager.NewAdminRedisManager(r)
+	temp := r_manager.NewSku()
+
+	resp, err = rc.GetOneInventory(ctx, cheese, "price")
+	if err != nil {
+		log.Printf("ERROR GET ONE : %+v\n", err)
+	}
+	fmt.Printf("HERE WE GO AGAIN : %+v\n", temp)
+
+	fmt.Printf("GOT ONE ITEM : %+v\n", resp)
+	fmt.Println("END GetOneItem: ", time.Since(start))
+	return
 }

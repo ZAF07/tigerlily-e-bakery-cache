@@ -1,27 +1,26 @@
 package redismanager
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
-
-	"context"
 
 	rpc "github.com/ZAF07/tigerlily-e-bakery-cache/rpc"
 	"github.com/go-redis/redis/v9"
 )
 
-type RedisManager struct {
+type AdminRedisManager struct {
 	Conn *redis.Client
 }
 
-func NewRedisManager(conn *redis.Client) *RedisManager {
-	return &RedisManager{
+func NewAdminRedisManager(conn *redis.Client) *AdminRedisManager {
+	return &AdminRedisManager{
 		Conn: conn,
 	}
 }
 
-func (r *RedisManager) Ping(ctx context.Context) (err error) {
+func (r *AdminRedisManager) Ping(ctx context.Context) (err error) {
 	if err = r.Conn.Ping(ctx).Err(); err != nil {
 		log.Printf("ERROR : %+v", err)
 		return err
@@ -30,7 +29,7 @@ func (r *RedisManager) Ping(ctx context.Context) (err error) {
 }
 
 // ✅ GetAllInventories returns all inventory items from the cache
-func (r *RedisManager) GetAllInventories(ctx context.Context, items []*rpc.Sku) (resp *rpc.GetAllInventoriesResp, err error) {
+func (r *AdminRedisManager) GetAllInventories(ctx context.Context, items []*rpc.Sku) (resp *rpc.GetAllInventoriesResp, err error) {
 	start := time.Now()
 	// defer r.Conn.Close()
 	resp = &rpc.GetAllInventoriesResp{}
@@ -73,8 +72,25 @@ func (r *RedisManager) GetAllInventories(ctx context.Context, items []*rpc.Sku) 
 	return
 }
 
+func (r *AdminRedisManager) GetOneInventory(ctx context.Context, item *rpc.Sku, field string) (resp *rpc.Sku, err error) {
+	start := time.Now()
+	temp := &Sku{}
+	err = r.Conn.HGetAll(ctx, item.Name).Scan(temp)
+	resp = &rpc.Sku{
+		Name:        temp.Name,
+		SkuId:       temp.SkuID,
+		Description: temp.Description,
+		Type:        temp.Type,
+		Price:       temp.Price,
+		ImageUrl:    temp.ImageUrl,
+		Quantity:    int32(temp.Quantity),
+	}
+	fmt.Println("END GetOneItem: ", time.Since(start))
+	return
+}
+
 // ✅ DeductQuantity removes one item quantity from the cache
-func (r *RedisManager) DeductQuantity(ctx context.Context, itemName string, quantity int) (err error) {
+func (r *AdminRedisManager) DeductQuantity(ctx context.Context, itemName string, quantity int) (err error) {
 	start := time.Now()
 	// defer r.Conn.Close()
 	item := Sku{}
@@ -121,7 +137,7 @@ func (r *RedisManager) DeductQuantity(ctx context.Context, itemName string, quan
 // }
 
 // AddInventories acts like bulk insert. It add multiple items to the cache
-func (r *RedisManager) AddInventories(ctx context.Context, inventories []*rpc.Sku) (err error) {
+func (r *AdminRedisManager) AddInventories(ctx context.Context, inventories []*rpc.Sku) (err error) {
 	start := time.Now()
 	if _, err = r.Conn.Pipelined(ctx, func(rdb redis.Pipeliner) error {
 		for _, item := range inventories {
@@ -144,7 +160,7 @@ func (r *RedisManager) AddInventories(ctx context.Context, inventories []*rpc.Sk
 }
 
 // AddInventory adds one item to the inventory
-func (r *RedisManager) AddInventory(ctx context.Context, item *rpc.Sku) (er error) {
+func (r *AdminRedisManager) AddInventory(ctx context.Context, item *rpc.Sku) (er error) {
 	start := time.Now()
 	if _, err := r.Conn.Pipelined(ctx, func(rdb redis.Pipeliner) error {
 

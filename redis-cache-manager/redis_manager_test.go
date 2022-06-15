@@ -2,6 +2,7 @@ package redismanager
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	rpc "github.com/ZAF07/tigerlily-e-bakery-cache/rpc"
@@ -99,4 +100,19 @@ func TestGetAllInventories(t *testing.T) {
 		passed = false
 	}
 	assert.True(t, passed, "AddInventory redis client passed")
+}
+
+func TestGetOneItem(t *testing.T) {
+
+	manager := NewAdminRedisManager(rdb)
+	passed := true
+	resp, err := manager.GetOneInventory(ctx, cheese, "price")
+	if err != nil {
+		passed = false
+	}
+	if resp == nil {
+		passed = false
+	}
+	msg := fmt.Sprintf("Test for GetOneItem passed: %t", passed)
+	assert.True(t, passed, msg)
 }
