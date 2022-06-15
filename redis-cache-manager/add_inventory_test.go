@@ -1,7 +1,6 @@
 package redismanager
 
 import (
-	"fmt"
 	"testing"
 
 	rpc "github.com/ZAF07/tigerlily-e-bakery-cache/rpc"
@@ -9,10 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 )
-
-/*
-	❌ Look into this. Does not work now
-*/
 
 var rdb = redis.NewClient(&redis.Options{
 	Addr:     "localhost:6379",
@@ -72,10 +67,9 @@ func TestAddInventories(t *testing.T) {
 	itemsToAdd = append(itemsToAdd, egg)
 	itemsToAdd = append(itemsToAdd, cheese)
 	manager := NewRedisManager(rdb)
-	var err error
-	if err = manager.AddInventories(ctx, itemsToAdd); err != nil {
-		fmt.Println("RUNNING")
+	passed := true
+	if err := manager.AddInventories(ctx, itemsToAdd); err != nil {
+		passed = false
 	}
-	assert.Error(t, err)
-	// (t, passed, "AddInventory redis client passed")
+	assert.True(t, passed, "AddInventory redis client passed")
 }
