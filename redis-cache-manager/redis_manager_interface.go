@@ -3,7 +3,8 @@ package redismanager
 import (
 	"context"
 
-	rpc "github.com/ZAF07/tigerlily-e-bakery-cache/rpc"
+	// rpc "github.com/ZAF07/tigerlily-e-bakery-cache/rpc"
+	"github.com/ZAF07/tigerlily-e-bakery-inventories/api/rpc"
 )
 
 type Redismanager interface {
