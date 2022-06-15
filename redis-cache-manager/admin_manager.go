@@ -16,7 +16,7 @@ type AdminRedisManager struct {
 }
 
 // NewAdminRedisManager returns a new AdminRedisManager instance
-func NewAdminRedisManager(conn *redis.Client) *AdminRedisManager {
+func NewAdminRedisManager(conn *redis.Client, s string) *AdminRedisManager {
 	return &AdminRedisManager{
 		Conn: conn,
 	}
