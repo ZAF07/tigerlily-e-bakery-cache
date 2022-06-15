@@ -2,6 +2,7 @@ package redismanager
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -14,12 +15,14 @@ type AdminRedisManager struct {
 	Conn *redis.Client
 }
 
+// NewAdminRedisManager returns a new AdminRedisManager instance
 func NewAdminRedisManager(conn *redis.Client) *AdminRedisManager {
 	return &AdminRedisManager{
 		Conn: conn,
 	}
 }
 
+// Ping runs a health check...
 func (r *AdminRedisManager) Ping(ctx context.Context) (err error) {
 	if err = r.Conn.Ping(ctx).Err(); err != nil {
 		log.Printf("ERROR : %+v", err)
@@ -28,7 +31,7 @@ func (r *AdminRedisManager) Ping(ctx context.Context) (err error) {
 	return nil
 }
 
-// ✅ GetAllInventories returns all inventory items from the cache
+// ✅ GetAllInventories, returns all inventory items from the cache
 func (r *AdminRedisManager) GetAllInventories(ctx context.Context, items []*rpc.Sku) (resp *rpc.GetAllInventoriesResp, err error) {
 	start := time.Now()
 	// defer r.Conn.Close()
@@ -72,6 +75,7 @@ func (r *AdminRedisManager) GetAllInventories(ctx context.Context, items []*rpc.
 	return
 }
 
+// GetOneInventory, gets one item from the inventory
 func (r *AdminRedisManager) GetOneInventory(ctx context.Context, item string) (resp *rpc.Sku, err error) {
 	start := time.Now()
 	temp := &Sku{}
@@ -89,7 +93,7 @@ func (r *AdminRedisManager) GetOneInventory(ctx context.Context, item string) (r
 	return
 }
 
-// ✅ DeductQuantity removes one item quantity from the cache
+// DeductQuantity, removes one item quantity from the cache
 func (r *AdminRedisManager) DeductQuantity(ctx context.Context, itemName string, quantity int) (err error) {
 	start := time.Now()
 	// defer r.Conn.Close()
@@ -127,15 +131,39 @@ func (r *AdminRedisManager) DeductQuantity(ctx context.Context, itemName string,
 	return nil
 }
 
-// ❌
+// ❌ REFACTOR 14MS !!!!!!!
 // DeductQuantities removes multiple item quantities from the cache
-// func (r *RedisManager) DeductQuantities(ctx context.Context, itemName map[string]interface{}, quantity int) (err error) {
-// 	for _ v := range itemName {
-// 		item := &SkuInstance{}
-// 		err = r.Conn.HGetAll(ctx, v).Scan(item.Sku)
-// 		item.DeductItemQuantity(quantity)
-// 	}
-// }
+func (r *AdminRedisManager) DeductQuantities(ctx context.Context, itemName []map[string]interface{}) error {
+	start := time.Now()
+	if _, err := r.Conn.Pipelined(ctx, func(rdb redis.Pipeliner) error {
+		for _, item := range itemName {
+			b, err := json.Marshal(item)
+			if err != nil {
+				log.Printf("ERROR MARSHAL : %+v", err)
+				return err
+			}
+			itemsToDeductQty := &ItemToDeductQty{}
+			em := json.Unmarshal(b, itemsToDeductQty)
+			if em != nil {
+				log.Println("error unmarchalling: ", em)
+				return em
+			}
+			errDeduct := r.DeductQuantity(ctx, itemsToDeductQty.Item, itemsToDeductQty.Quantity)
+			if errDeduct != nil {
+				log.Println("Error in loop deduct: ", errDeduct)
+				return errDeduct
+			}
+
+			// r.Conn.HSet(ctx, itemsToDeductQty.Item, itemsToDeductQty.Quantity)
+		}
+		return nil
+	}); err != nil {
+		log.Printf("Error trying to set pipeline for adding inventories : %+v", err)
+		return err
+	}
+	fmt.Println("END OF DEDUCT MANY : ", time.Since(start))
+	return nil
+}
 
 // AddInventories acts like bulk insert. It add multiple items to the cache
 func (r *AdminRedisManager) AddInventories(ctx context.Context, inventories []*rpc.Sku) (err error) {
@@ -176,7 +204,68 @@ func (r *AdminRedisManager) AddInventory(ctx context.Context, item *rpc.Sku) (er
 	return nil
 }
 
-// func (r *AdminRedisManager) DeleteOne(ctx context.Context, item string) (err error)     {}
-// func (r *AdminRedisManager) DeleteMany(ctx context.Context, items []string) (err error) {}
-// func (r *AdminRedisManager) UpdateOne(ctx context.Context, item string) (err error)     {}
-// func (r *AdminRedisManager) UpdateMany(ctx context.Context, item []string) (err error)  {}
+// DeleteOne deletes one item from the inventory
+func (r *AdminRedisManager) DeleteOne(ctx context.Context, item string) (err error) {
+	start := time.Now()
+
+	err = r.Conn.Del(ctx, item).Err()
+	fmt.Println("END OF DEL: ", time.Since(start))
+	return
+}
+
+// DeleteMany deletes multiple items from the inventory
+func (r *AdminRedisManager) DeleteMany(ctx context.Context, items []string) (err error) {
+	start := time.Now()
+
+	if _, err = r.Conn.Pipelined(ctx, func(rdb redis.Pipeliner) error {
+		for _, item := range items {
+
+			r.Conn.Del(ctx, item)
+		}
+		return nil
+	}); err != nil {
+		log.Printf("Error trying to set pipeline for adding inventories : %+v", err)
+		return err
+	}
+	fmt.Println("END OF DEL MANY: ", time.Since(start))
+	return
+}
+
+// UpdateOne updates one item from any field of the inventory
+func (r *AdminRedisManager) UpdateOne(ctx context.Context, item string, field string, val interface{}) (err error) {
+	start := time.Now()
+
+	err = r.Conn.HSet(ctx, item, field, val).Err()
+	if err != nil {
+		log.Printf("Error updating one : %+v\n", err)
+	}
+
+	fmt.Println("DONE UPDATE_ONE : ", time.Since(start))
+	return
+}
+
+// UpdateMany updates many items from any fields of the inventory
+func (r *AdminRedisManager) UpdateMany(ctx context.Context, items []map[string]interface{}) (err error) {
+	start := time.Now()
+
+	if _, err = r.Conn.Pipelined(ctx, func(rdb redis.Pipeliner) error {
+		for _, item := range items {
+			b, e := json.Marshal(item)
+			if e != nil {
+				log.Printf("ERROR MARSHAL : %+v", e)
+			}
+			itemToDoUpdates := &ItemToUpDate{}
+			em := json.Unmarshal(b, itemToDoUpdates)
+			if em != nil {
+				log.Println("error unmarchalling: ", em)
+			}
+			r.Conn.HSet(ctx, itemToDoUpdates.Item, itemToDoUpdates.Key, itemToDoUpdates.Value)
+		}
+		return nil
+	}); err != nil {
+		log.Printf("Error trying to set pipeline for adding inventories : %+v", err)
+		return err
+	}
+	fmt.Println("END OF UPDATE MANY: ", time.Since(start))
+	return
+}

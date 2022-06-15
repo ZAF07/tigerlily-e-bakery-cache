@@ -99,7 +99,8 @@ func TestGetAllInventories(t *testing.T) {
 	if resp == nil || len(resp.Inventories) < 1 {
 		passed = false
 	}
-	assert.True(t, passed, "AddInventory redis client passed")
+	msg := fmt.Sprintf("Test for GetAllInventories passed: %t", passed)
+	assert.True(t, passed, msg)
 }
 
 func TestGetOneItem(t *testing.T) {
@@ -114,5 +115,84 @@ func TestGetOneItem(t *testing.T) {
 		passed = false
 	}
 	msg := fmt.Sprintf("Test for GetOneItem passed: %t", passed)
+	assert.True(t, passed, msg)
+}
+
+func TestDeleteOneItem(t *testing.T) {
+
+	manager := NewAdminRedisManager(rdb)
+	passed := true
+	err := manager.DeleteOne(ctx, cheese.Name)
+	if err != nil {
+		passed = false
+	}
+
+	msg := fmt.Sprintf("Test for DeleteOne passed: %t", passed)
+	assert.True(t, passed, msg)
+}
+
+func TestDeleteMany(t *testing.T) {
+
+	manager := NewAdminRedisManager(rdb)
+	passed := true
+	err := manager.DeleteMany(ctx, []string{"lemon tart", "cheese tart", "egg tart"})
+	if err != nil {
+		passed = false
+	}
+
+	msg := fmt.Sprintf("Test for DeleteMany passed: %t", passed)
+	assert.True(t, passed, msg)
+}
+
+func TestUpdateone(t *testing.T) {
+
+	manager := NewAdminRedisManager(rdb)
+	passed := true
+	err := manager.UpdateOne(ctx, "lemon tart", "price", 200)
+	if err != nil {
+		passed = false
+	}
+
+	msg := fmt.Sprintf("Test for UpdateOne passed: %t", passed)
+	assert.True(t, passed, msg)
+}
+
+func TestUpdateMany(t *testing.T) {
+
+	manager := NewAdminRedisManager(rdb)
+	passed := true
+
+	toUpdate := []map[string]interface{}{
+		{"item": "lemon tart", "key": "price", "value": 500},
+		{"item": "egg tart", "key": "price", "value": 500},
+		{"item": "cheese tart", "key": "price", "value": 500},
+	}
+
+	err := manager.UpdateMany(ctx, toUpdate)
+	if err != nil {
+		passed = false
+	}
+
+	msg := fmt.Sprintf("Test for UpdateMany passed: %t", passed)
+	assert.True(t, passed, msg)
+}
+
+func TestDeductMany(t *testing.T) {
+
+	manager := NewAdminRedisManager(rdb)
+	passed := true
+
+	toDeductItems := []map[string]interface{}{
+		{"item": "cheese tart", "quantity": 500},
+		{"item": "lemon tart", "quantity": 500},
+		{"item": "egg tart", "quantity": 500},
+	}
+
+	err := manager.DeductQuantities(ctx, toDeductItems)
+	if err != nil {
+		passed = false
+	}
+
+	msg := fmt.Sprintf("Test for UpdateMany passed: %t", passed)
 	assert.True(t, passed, msg)
 }

@@ -14,6 +14,17 @@ type Sku struct {
 	Quantity    int     `redis:"quantity"`
 }
 
+type ItemToUpDate struct {
+	Item  string
+	Key   string
+	Value interface{}
+}
+
+type ItemToDeductQty struct {
+	Item     string
+	Quantity int
+}
+
 type SingleRedisItem struct {
 	Name   string
 	Result *redis.MapStringStringCmd
