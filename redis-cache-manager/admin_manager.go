@@ -9,7 +9,7 @@ import (
 
 	// rpc "github.com/ZAF07/tigerlily-e-bakery-cache/rpc"
 	"github.com/ZAF07/tigerlily-e-bakery-inventories/api/rpc"
-	"github.com/go-redis/redis/v9"
+	"github.com/go-redis/redis/v8"
 )
 
 type AdminRedisManager struct {

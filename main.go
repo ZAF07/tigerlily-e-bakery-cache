@@ -2,14 +2,19 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	r_manager "github.com/ZAF07/tigerlily-e-bakery-cache/redis-cache-manager"
+	"github.com/nitishm/go-rejson/v4"
+
+	// Dont need cache/proto & submodules. Can delete
 	// "github.com/ZAF07/tigerlily-e-bakery-cache/rpc"
 	"github.com/ZAF07/tigerlily-e-bakery-inventories/api/rpc"
-	"github.com/go-redis/redis/v9"
+	"github.com/go-redis/redis/v8"
 )
 
 var ctx = context.Background()
@@ -57,19 +62,51 @@ func main() {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.Fatalf("ERROR REDIS : %+v", err)
 	}
-	cache := r_manager.NewRedisManager(rdb)
 
-	itemsToAdd := []*rpc.Sku{}
-	itemsToAdd = append(itemsToAdd, lemon)
-	itemsToAdd = append(itemsToAdd, egg)
-	itemsToAdd = append(itemsToAdd, cheese)
+	rh := rejson.NewReJSONHandler()
 
-	bulkErr := cache.AddInventories(ctx, GetItems())
-	if bulkErr != nil {
-		log.Printf("BULD ADD ERROR : %+v", bulkErr)
+	type Person struct {
+		Name string `json:"name"`
+		Age  int    `json:"age"`
 	}
-	fmt.Println("DONE BULK ADD")
-	fmt.Println("************************************")
+
+	// p := Person{"Zafffere", 10}
+	rh.SetGoRedisClient(rdb)
+	// toAdd, merr := json.Marshal(p)
+	// if merr != nil {
+	// 	log.Fatalf("Marshal err : %+v\n", merr)
+	// }
+	// rh.JSONSet("person", ".", p)
+
+	// 💡 TODO: Migrate redis to redisJSON.
+
+	// GET BY KEY
+	// g, gerr := rh.JSONGet("person", "name")
+
+	// GET ENTIRE OBJECT
+	g, gerr := rh.JSONGet("person", "name")
+	if gerr != nil {
+		log.Fatalf("Error getting from redis : %+v\n", gerr)
+	}
+	// jj := &Person{}
+	// rr := json.Unmarshal(g.([]byte), jj)
+	// if rr != nil {
+	// 	log.Fatalf("Eror nmarshal : %+v\n", rr)
+	// }
+	fmt.Printf("HERE IS THE PERSON : %s\n", g.([]byte))
+	// cache := r_manager.NewRedisManager(rdb)
+
+	// itemsToAdd := []*rpc.Sku{}
+	// itemsToAdd = append(itemsToAdd, lemon)
+	// itemsToAdd = append(itemsToAdd, egg)
+	// itemsToAdd = append(itemsToAdd, cheese)
+
+	// bulkErr := cache.AddInventories(ctx, GetItems())
+	// if bulkErr != nil {
+	// 	log.Printf("BULD ADD ERROR : %+v", bulkErr)
+	// }
+	// fmt.Println("DONE BULK ADD")
+	// fmt.Println("************************************")
 	// item := &rpc.Sku{
 	// 	Name:        "lemon tart",
 	// 	Price:       2.4,
@@ -275,5 +312,17 @@ func GetItems() []*rpc.Sku {
 	}
 	items := []*rpc.Sku{}
 	items = append(items, lemon, roll, lemonSorbet, lemonIceCream, oreoCake, eggPie, egg, lemon, applePie, cheesePie, cheeseBun)
+	b, e := json.Marshal(items)
+	if e != nil {
+		fmt.Println(":Error unmarslaing : ", e)
+	}
+	os.WriteFile("inventories.yaml", b, 0644)
 	return items
 }
+
+// func TestProtoRedis() {
+// 	// a, err := proto.Marshal()
+// 	if err != nil {
+// 		fmt.Println("Err : ", err)
+// 	}
+// }

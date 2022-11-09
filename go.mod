@@ -8,17 +8,23 @@ require github.com/go-redis/redis/v9 v9.0.0-beta.1
 
 require github.com/stretchr/testify v1.7.0
 
-require github.com/ZAF07/tigerlily-e-bakery-inventories v0.0.0-20220607055318-f3d989e0148a
+require (
+	github.com/ZAF07/tigerlily-e-bakery-inventories v0.0.0-20220607055318-f3d989e0148a
+	github.com/gogo/protobuf v1.3.2
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/kr/pretty v0.2.0 // indirect
+	github.com/nitishm/go-rejson/v4 v4.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	go.opentelemetry.io/otel v0.15.0 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/text v0.3.7 // indirect

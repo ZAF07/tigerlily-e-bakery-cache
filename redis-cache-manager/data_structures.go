@@ -1,7 +1,7 @@
 package redismanager
 
 import (
-	"github.com/go-redis/redis/v9"
+	"github.com/go-redis/redis/v8"
 )
 
 type Sku struct {
@@ -26,8 +26,9 @@ type ItemToDeductQty struct {
 }
 
 type SingleRedisItem struct {
-	Name   string
-	Result *redis.MapStringStringCmd
+	Name string
+	// Result *redis.MapStringStringCmd // was for go-redis V9
+	Result *redis.StringStringMapCmd
 	Store  *Sku
 }
 
